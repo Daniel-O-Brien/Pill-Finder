@@ -50,7 +50,6 @@ public class PrimaryController {
             width = (int) image.getWidth();
             height = (int) image.getHeight();
 
-
             pixelReader = image.getPixelReader();
 
             imageView.setImage(image);
@@ -66,70 +65,58 @@ public class PrimaryController {
     public void scanImage(MouseEvent event) {
         wImage = new WritableImage(width, height);
         pwImage = wImage.getPixelWriter();
+        for (int i = 0; i < pictureSize.length;) {
+            pictureSize[i] = i++;
+        }
         Color colourToCompare = pixelReader.getColor((int) event.getSceneX() - 65, (int) event.getSceneY() - 65);
         int i = 0;
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
                 if (Math.abs(pixelReader.getColor(x, y).getHue() - colourToCompare.getHue()) <= 2) {
-                        pwImage.setColor(x, y, WHITE);
-                        pictureSize[i] = i;
-                    } else {
-//                        if(!(pictureSize[i] > 0))
-//                            try {
-//                                int temp = pictureSize[i];
-//                                while (pictureSize[temp] != temp) {
-//                                    temp = pictureSize[temp];
-//                                    System.out.println("2: " + temp + " " + pictureSize[temp]);
-//                                }
-//                                pictureSize[i] = temp;
-//                        } catch (ArrayIndexOutOfBoundsException e) {System.out.println("AIOUBE");}
-//                    }
-                            if (x+1 < image.getWidth() && Math.abs(pixelReader.getColor(x + 1, y).getHue() - colourToCompare.getHue()) <= 2) {
-                                if(i + 1 <= pictureSize.length && pictureSize[i + 1] >= 0) {
-                                    if (pictureSize[i + 1] == 0) {
-                                        pwImage.setColor(x + 1, y, WHITE);
-                                        pictureSize[i + 1] = pictureSize[i];
-                                    } else {
-                                        int temp = i;
-                                        while(pictureSize[temp] != temp)
-                                            temp++;
-                                        pictureSize[i] = temp;
-                                    }
-                                }
-                                else {pictureSize[i + 1] = -1;}
-                            }
-                            if (y + 1< image.getHeight() && Math.abs(pixelReader.getColor(x, y + 1).getHue() - colourToCompare.getHue()) <= 2) {
-                                if(i+width < pictureSize.length && pictureSize[i + width] >= 0) {
-                                    if (pictureSize[i + width] == 0) {
-                                        pwImage.setColor(x + 1, y, WHITE);
-                                        pictureSize[i + width] = pictureSize[i];
-                                    } else {
-                                        int temp = i;
-                                        while(pictureSize[temp] != temp)
-                                            temp++;
-                                        pictureSize[i] = temp;
-                                    }
-                                }
-                                else {pictureSize[i + width] = -1;}
-                            }
+                    if (x + 1 < width && Math.abs(pixelReader.getColor(x + 1, y).getHue() - colourToCompare.getHue()) <= 2 && i + 1 < pictureSize.length && pictureSize[i + 1] == i + 1) {
+                        pictureSize[i + 1] = i;
                     }
-                } else {
-                    try {
-                        System.out.println("No");
-                        pwImage.setColor(x, y, BLACK);
-                        pictureSize[i+1] = -1;
+                    if (y + 1 < height && Math.abs(pixelReader.getColor(x, y + 1).getHue() - colourToCompare.getHue()) <= 2 && i + width < pictureSize.length && pictureSize[i + width] == i + 1) {
+                        pictureSize[i + width] = i;
                     }
-                    catch (ArrayIndexOutOfBoundsException e) {}
                 }
+                else
+                    pictureSize[i] = -1;
                 i++;
             }
         }
-        imageViewScanned.setImage(wImage);
-        StringBuilder str = new StringBuilder();
-        for (i = 0; i < pictureSize.length; i++) {
-            if (pictureSize[i] > 0)
-                str.append(pictureSize[i]).append(", ");
+        System.out.println("set pictureSize");
+        int[] counter = new int[pictureSize.length];
+        int index;
+        for(i = 0; i < pictureSize.length; i++){
+            if(pictureSize[i] != -1) {
+                index = i;
+                while(pictureSize[index] != index)
+                    index = pictureSize[index];
+            counter[index]++;
+            }
         }
-        System.out.println("Picture size: " + str);
+        System.out.println("Counted");
+        i = 0;
+        for(int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                if(pictureSize[i] != -1) {
+                    index = i;
+                    while (pictureSize[index] != index)
+                        index = pictureSize[index];
+                    if (counter[index] > 5)
+                        pwImage.setColor(x, y, WHITE);
+                }
+                else pwImage.setColor(x, y, BLACK);
+                i++;
+            }
+        }
+        System.out.println("changed colours");
+    imageViewScanned.setImage(wImage);
+    System.out.println("Set image");
+    }
+
+    public int find(int[] array, int id) {
+        return array[id]==id ? id : find(array, array[id]);
     }
 }
